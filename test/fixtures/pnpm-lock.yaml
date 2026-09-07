@@ -1,0 +1,12 @@
+lockfileVersion: '9.0'
+
+packages:
+
+  package-a@1.0.0:
+    resolution: {integrity: sha512-example, tarball: https://ms-feed-2.pkgs.visualstudio.com/npm/package-a/-/package-a-1.0.0.tgz}
+
+  package-b@1.0.0:
+    resolution: {tarball: https://ms-feed-25.pkgs.visualstudio.com/npm/package-b/-/package-b-1.0.0.tgz}
+
+  github-package@1.0.0:
+    resolution: {tarball: https://github.com/example/archive.tgz}

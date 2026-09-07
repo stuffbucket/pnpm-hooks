@@ -1,0 +1,29 @@
+ARG NODE_IMAGE
+FROM ${NODE_IMAGE}
+
+ARG PNPM_VERSION
+ARG TOOL_REGISTRY
+ARG TURBO_VERSION
+
+RUN npm install --global \
+    --registry="${TOOL_REGISTRY}" \
+    --fetch-retries=1 \
+    --fetch-retry-mintimeout=1000 \
+    --fetch-retry-maxtimeout=5000 \
+    --fetch-timeout=30000 \
+      "pnpm@${PNPM_VERSION}" "turbo@${TURBO_VERSION}" \
+    && npm cache clean --force
+
+WORKDIR /workspace
+COPY --chown=node:node . .
+
+USER node
+ENV HOME=/home/node \
+    PNPM_HOME=/tmp/pnpm-home \
+    XDG_CACHE_HOME=/tmp/xdg-cache \
+    XDG_CONFIG_HOME=/tmp/xdg-config \
+    XDG_DATA_HOME=/tmp/xdg-data \
+    TURBO_TELEMETRY_DISABLED=1 \
+    PNPM_VERSION=${PNPM_VERSION}
+
+CMD ["node", "--test", "test/docker-compat.mjs"]
