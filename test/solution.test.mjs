@@ -3,7 +3,7 @@ import { spawnSync } from "node:child_process";
 import { copyFileSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { test } from "node:test";
 
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
@@ -39,6 +39,20 @@ function execute(directory, ...args) {
   });
 }
 
+async function withHookManifest(manifest, run) {
+  const directory = mkdtempSync(join(tmpdir(), "pnpm-hooks-hook-"));
+  const hookPath = join(directory, ".pnpmfile.cjs");
+  const manifestPath = join(directory, "package.json");
+  copyFileSync(join(root, ".pnpmfile.cjs"), hookPath);
+  writeFileSync(manifestPath, JSON.stringify(manifest));
+  try {
+    const hook = await import(pathToFileURL(hookPath));
+    await run({ hook, manifestPath });
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+}
+
 test("repair removes only rotating Visual Studio shard tarball URLs", () => {
   inFixture((directory) => {
     const result = execute(directory);
@@ -64,24 +78,15 @@ test("check reports the problem without changing the lockfile", () => {
 });
 
 test("pnpm hook removes the same URLs from a parsed lockfile", async () => {
-  const manifestPath = join(root, "package.json");
-  const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
-  writeFileSync(
-    manifestPath,
-    JSON.stringify({
-      ...manifest,
-      pnpmTarballUrlPolicy: {
-        rules: [{
-          registry: "https://packagefeedproxy.microsoft.io/npm/",
-          includeTarballHostSuffixes: ["pkgs.visualstudio.com"],
-          action: "omit",
-        }],
-      },
-    }),
-  );
-
-  try {
-    const hook = await import(`${join(root, ".pnpmfile.cjs")}?omit`);
+  await withHookManifest({
+    pnpmTarballUrlPolicy: {
+      rules: [{
+        registry: "https://packagefeedproxy.microsoft.io/npm/",
+        includeTarballHostSuffixes: ["pkgs.visualstudio.com"],
+        action: "omit",
+      }],
+    },
+  }, ({ hook }) => {
     const lockfile = {
       packages: {
         shard: {
@@ -104,15 +109,10 @@ test("pnpm hook removes the same URLs from a parsed lockfile", async () => {
       lockfile.packages.fixed.resolution.tarball,
       "https://github.com/example/archive.tgz",
     );
-  } finally {
-    writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
-  }
+  });
 });
 
 test("pnpm hook defaults to blocking and gives exclusions precedence", async () => {
-  const manifestPath = join(root, "package.json");
-  const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
-  const hook = await import(`${join(root, ".pnpmfile.cjs")}?policy`);
   const makeLockfile = () => ({
     packages: {
       shard: {
@@ -123,11 +123,10 @@ test("pnpm hook defaults to blocking and gives exclusions precedence", async () 
     },
   });
 
-  try {
+  await withHookManifest({}, ({ hook, manifestPath }) => {
     writeFileSync(
       manifestPath,
       JSON.stringify({
-        ...manifest,
         pnpmTarballUrlPolicy: {
           rules: [{
             registry: "https://packagefeedproxy.microsoft.io/npm/",
@@ -144,7 +143,6 @@ test("pnpm hook defaults to blocking and gives exclusions precedence", async () 
     writeFileSync(
       manifestPath,
       JSON.stringify({
-        ...manifest,
         pnpmTarballUrlPolicy: {
           rules: [{
             registry: "https://packagefeedproxy.microsoft.io/npm/",
@@ -159,12 +157,10 @@ test("pnpm hook defaults to blocking and gives exclusions precedence", async () 
     hook.default.hooks.afterAllResolved(excluded);
     assert.match(excluded.packages.shard.resolution.tarball, /^https:/);
 
-    writeFileSync(manifestPath, JSON.stringify(manifest));
+    writeFileSync(manifestPath, "{}");
     assert.throws(
       () => hook.default.hooks.afterAllResolved(makeLockfile()),
       /must define pnpmTarballUrlPolicy\.rules/,
     );
-  } finally {
-    writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
-  }
+  });
 });

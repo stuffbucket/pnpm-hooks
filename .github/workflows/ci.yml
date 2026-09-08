@@ -34,20 +34,60 @@ jobs:
 
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: 18
+          node-version: 22.23.2
+
+      - name: Install pinned pnpm from the canonical registry
+        run: |
+          package_manager="$(node -p 'require("./package.json").packageManager')"
+          if [[ ! "$package_manager" =~ ^pnpm@([0-9]+\.[0-9]+\.[0-9]+)\+sha512\.([0-9a-f]+)$ ]]; then
+            echo "packageManager must pin pnpm with a SHA-512" >&2
+            exit 1
+          fi
+          version="${BASH_REMATCH[1]}"
+          checksum="${BASH_REMATCH[2]}"
+          if (( ${#checksum} != 128 )); then
+            echo "packageManager SHA-512 must contain 128 hexadecimal characters" >&2
+            exit 1
+          fi
+          archive="$RUNNER_TEMP/pnpm-$version.tgz"
+          install_dir="$RUNNER_TEMP/pnpm-$version"
+          curl --fail --silent --show-error --location \
+            --connect-timeout 10 --max-time 60 --retry 2 \
+            "https://packagefeedproxy.microsoft.io/npm/pnpm/-/pnpm-$version.tgz" \
+            --output "$archive"
+          printf '%s  %s\n' "$checksum" "$archive" | sha512sum --check --strict
+          mkdir -p "$install_dir"
+          tar -xzf "$archive" --directory "$install_dir" --strip-components=1
+          test -x "$install_dir/bin/pnpm.mjs"
+          ln -s pnpm.mjs "$install_dir/bin/pnpm"
+          [[ "$("$install_dir/bin/pnpm" --version)" == "$version" ]]
+          printf '%s\n' "$install_dir/bin" >> "$GITHUB_PATH"
+
+      - name: Validate the project lockfile
+        run: pnpm install --frozen-lockfile
 
       - name: Check JavaScript syntax
-        run: npm run lint
+        run: pnpm run lint
 
       - name: Run unit tests
-        run: npm test
+        run: pnpm run test
 
-      # Unit tests temporarily rewrite package.json and must restore it.
+      # Catch any test or generated-file drift before the Docker matrix.
       - name: Verify unit tests leave the checkout unchanged
         run: git diff --exit-code
 
       - uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
+        with:
+          version: v0.37.0
+
+      - name: Verify the Buildx binary
+        run: |
+          buildx_path="$(docker info --format '{{range .ClientInfo.Plugins}}{{if eq .Name "buildx"}}{{.Path}}{{end}}{{end}}')"
+          test -x "$buildx_path"
+          printf '%s  %s\n' \
+            'ae43fa08c796b44efc86d7a63c55f73f7c35f3101188dea7bf93bcd6f99577ba' \
+            "$buildx_path" | sha256sum --check --strict
 
       # The repository harness owns the pnpm-version matrix and container hardening.
       - name: Run Docker compatibility tests
-        run: npm run test:docker
+        run: pnpm run test:docker
