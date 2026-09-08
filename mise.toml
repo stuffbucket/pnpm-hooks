@@ -1,0 +1,28 @@
+# Local host-tool pins. CI installs Node and Buildx through pinned actions, while
+# pnpm and Turbo inside compatibility images remain owned by the Docker harness.
+[tools]
+node = "22.23.2"
+"aqua:docker/buildx" = "0.37.0"
+
+[settings]
+# The lockfile supplies content hashes for release artifacts, including macOS
+# Buildx archives for which upstream does not publish checksums.
+lockfile = true
+
+[tasks.setup-buildx]
+description = "Link the mise-managed Buildx binary into Docker's CLI plugin directory"
+run = '''
+set -euo pipefail
+
+source="$(mise where aqua:docker/buildx)/docker-cli-plugin-docker-buildx"
+plugin_dir="${DOCKER_CONFIG:-$HOME/.docker}/cli-plugins"
+destination="$plugin_dir/docker-buildx"
+
+mkdir -p "$plugin_dir"
+if [ -e "$destination" ] && [ ! -L "$destination" ]; then
+  echo "Refusing to replace non-symlink Buildx plugin: $destination" >&2
+  exit 1
+fi
+ln -sfn "$source" "$destination"
+docker buildx version
+'''

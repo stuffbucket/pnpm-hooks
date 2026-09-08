@@ -127,15 +127,30 @@ registry configured by the project, as they normally would.
 
 ## Test
 
-No dependencies are required:
+Install the pinned host-side Node and Docker Buildx tools with mise, then link
+Buildx into Docker's CLI plugin directory:
 
 ```sh
+mise install --locked
+mise run setup-buildx
+docker buildx version
+```
+
+The setup task is explicit because it writes a symlink under
+`${DOCKER_CONFIG:-$HOME/.docker}/cli-plugins`. Docker itself and a running
+Docker daemon remain system prerequisites; mise does not manage them. No npm
+package installation is required.
+
+Check syntax and run the unit tests directly on the host:
+
+```sh
+npm run lint
 npm test
 ```
 
-The compatibility matrix builds separate containers for pnpm 11 and 12, then
-runs plain-project, shared-lockfile monorepo, Turborepo, and policy-mutation
-tests with runtime networking disabled:
+The compatibility matrix uses BuildKit to build and load separate containers
+for pnpm 11 and 12, then runs plain-project, shared-lockfile monorepo,
+Turborepo, and policy-mutation tests with runtime networking disabled:
 
 ```sh
 npm run test:docker
@@ -144,7 +159,8 @@ npm run test:docker
 Image construction downloads the exact pnpm and Turbo versions through
 `https://packagefeedproxy.microsoft.io/npm/`; it does not contact
 `registry.npmjs.org`. Registry retries and request duration are bounded so a
-denied build dependency fails promptly.
+denied build dependency fails promptly. pnpm and Turbo are pinned inside the
+container harness rather than managed by the host's mise configuration.
 
 Each fixture sets `pmOnFail: ignore` because the container image, rather than
 pnpm's package-manager downloader, owns the exact pnpm version under test.

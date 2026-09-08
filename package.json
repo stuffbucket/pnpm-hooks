@@ -5,6 +5,7 @@
   "description": "Apply explicit workspace policy to rotating pnpm registry shard URLs",
   "type": "module",
   "scripts": {
+    "lint": "node --check .pnpmfile.cjs && node --check apply-pnpm-tarball-policy.mjs && node --check scripts/docker-test.mjs && node --check test/docker-compat.mjs && node --check test/solution.test.mjs",
     "test": "node --test test/solution.test.mjs",
     "test:docker": "node scripts/docker-test.mjs"
   },
