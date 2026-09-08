@@ -4,13 +4,26 @@
   "private": true,
   "description": "Apply explicit workspace policy to rotating pnpm registry shard URLs",
   "type": "module",
+  "packageManager": "pnpm@11.25.0+sha512.5cde925b4f075f725eb71fbae18a42ffe784524789f19b61c731cb8721ec28aaee160e01a8d5af4fedb2a42cdbf300efe23db356b0d4a17b4d63e11f8ab7c956",
+  "pnpmTarballUrlPolicy": {
+    "rules": [
+      {
+        "registry": "https://packagefeedproxy.microsoft.io/npm/",
+        "includeTarballHostSuffixes": [
+          "pkgs.visualstudio.com"
+        ],
+        "action": "omit"
+      }
+    ]
+  },
   "scripts": {
-    "lint": "node --check .pnpmfile.cjs && node --check apply-pnpm-tarball-policy.mjs && node --check scripts/docker-test.mjs && node --check test/docker-compat.mjs && node --check test/solution.test.mjs",
+    "clean:docker": "node scripts/docker-clean.mjs",
+    "lint": "node --check .pnpmfile.cjs && node --check apply-pnpm-tarball-policy.mjs && node --check scripts/docker-clean.mjs && node --check scripts/docker-test.mjs && node --check test/docker-compat.mjs && node --check test/solution.test.mjs",
     "test": "node --test test/solution.test.mjs",
     "test:docker": "node scripts/docker-test.mjs"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=22.13"
   },
   "license": "MIT"
 }

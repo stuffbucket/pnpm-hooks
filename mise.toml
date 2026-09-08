@@ -1,13 +1,30 @@
-# Local host-tool pins. CI installs Node and Buildx through pinned actions, while
-# pnpm and Turbo inside compatibility images remain owned by the Docker harness.
+# Local host-tool pins. CI installs the same versions through pinned actions or
+# checksum-verified archives. The matrix owns its in-container tools separately.
 [tools]
 node = "22.23.2"
+"aqua:pnpm/pnpm" = { version = "11.25.0", os = ["windows"] }
 "aqua:docker/buildx" = "0.37.0"
+
+# pnpm has no standalone macOS x64 release, and its standalone Linux ARM
+# releases require libraries absent from common distributions. Use the
+# platform-neutral package from the canonical workspace registry on Unix.
+[tools."http:pnpm-npm"]
+version = "11.25.0"
+os = ["linux", "macos"]
+url = "https://packagefeedproxy.microsoft.io/npm/pnpm/-/pnpm-{{ version }}.tgz"
+checksum = "sha512:5cde925b4f075f725eb71fbae18a42ffe784524789f19b61c731cb8721ec28aaee160e01a8d5af4fedb2a42cdbf300efe23db356b0d4a17b4d63e11f8ab7c956"
+size = 5116259
+format = "tar.gz"
+strip_components = 1
+bin_path = "bin"
+rename_exe = { "pnpm.cjs" = "pnpm", "pnpx.cjs" = "pnpx" }
 
 [settings]
 # The lockfile supplies content hashes for release artifacts, including macOS
 # Buildx archives for which upstream does not publish checksums.
 lockfile = true
+locked = true
+locked_verify_provenance = true
 
 [tasks.setup-buildx]
 description = "Link the mise-managed Buildx binary into Docker's CLI plugin directory"

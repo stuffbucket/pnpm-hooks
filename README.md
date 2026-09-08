@@ -127,8 +127,8 @@ registry configured by the project, as they normally would.
 
 ## Test
 
-Install the pinned host-side Node and Docker Buildx tools with mise, then link
-Buildx into Docker's CLI plugin directory:
+Install the pinned host-side Node, pnpm, and Docker Buildx tools with mise, then
+link Buildx into Docker's CLI plugin directory:
 
 ```sh
 mise install --locked
@@ -138,14 +138,19 @@ docker buildx version
 
 The setup task is explicit because it writes a symlink under
 `${DOCKER_CONFIG:-$HOME/.docker}/cli-plugins`. Docker itself and a running
-Docker daemon remain system prerequisites; mise does not manage them. No npm
-package installation is required.
-
-Check syntax and run the unit tests directly on the host:
+Docker daemon remain system prerequisites; mise does not manage them. Because
+pnpm has no standalone macOS x64 release and its Linux ARM executables do not
+run on common distributions without additional runtime support, mise uses its
+checksum-pinned, platform-neutral package from the canonical workspace registry
+on Linux and macOS. The project currently has no packages to download, but its
+lockfile records the `.pnpmfile.cjs` checksum. After changing the hook, refresh
+that checksum with `pnpm install --lockfile-only` and commit the lockfile. Validate
+the committed lockfile before running the checks:
 
 ```sh
-npm run lint
-npm test
+pnpm install --frozen-lockfile
+pnpm run lint
+pnpm run test
 ```
 
 The compatibility matrix uses BuildKit to build and load separate containers
@@ -153,14 +158,34 @@ for pnpm 11 and 12, then runs plain-project, shared-lockfile monorepo,
 Turborepo, and policy-mutation tests with runtime networking disabled:
 
 ```sh
-npm run test:docker
+pnpm run test:docker
 ```
+
+A normal run removes its containers and loaded images. After an interrupted
+run, remove only this repository's labeled compatibility resources with:
+
+```sh
+pnpm run clean:docker
+# For an interrupted run that left its lease or a running container, after
+# confirming that no compatibility matrix is active:
+pnpm run clean:docker -- --force
+```
+
+Each matrix starts a labeled lease container before building its first image
+and removes it after the last cleanup. Keeping the lease running prevents a
+routine Docker prune from deleting it during the matrix. Without `--force`,
+cleanup checks for a lease before and after discovering resources and refuses
+to stop running containers. Force cleanup should never run while another matrix is active. It
+still targets only names and tags with the harness's exact pnpm-version, run-ID,
+role-label, and run-label pattern. The command does not prune unrelated images,
+Buildx builders, or shared BuildKit cache.
 
 Image construction downloads the exact pnpm and Turbo versions through
 `https://packagefeedproxy.microsoft.io/npm/`; it does not contact
 `registry.npmjs.org`. Registry retries and request duration are bounded so a
-denied build dependency fails promptly. pnpm and Turbo are pinned inside the
-container harness rather than managed by the host's mise configuration.
+denied build dependency fails promptly. The compatibility pnpm versions and
+Turbo are pinned by the container harness independently of the host pnpm in
+mise.
 
 Each fixture sets `pmOnFail: ignore` because the container image, rather than
 pnpm's package-manager downloader, owns the exact pnpm version under test.

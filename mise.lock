@@ -44,6 +44,82 @@ url = "https://github.com/docker/buildx/releases/download/v0.37.0/buildx-v0.37.0
 url_api = "https://api.github.com/repos/docker/buildx/releases/assets/541517590"
 provenance = "cosign"
 
+[[tools."aqua:pnpm/pnpm"]]
+version = "11.25.0"
+backend = "aqua:pnpm/pnpm"
+
+[tools."aqua:pnpm/pnpm"."platforms.linux-arm64"]
+checksum = "sha256:6d62b433b7a77b77e814dfaca8032bae57bb79c1a5ad50442e688c4f7fed3c8a"
+url = "https://github.com/pnpm/pnpm/releases/download/v11.25.0/pnpm-linux-arm64.tar.gz"
+url_api = "https://api.github.com/repos/pnpm/pnpm/releases/assets/535298943"
+provenance = "github-attestations"
+
+[tools."aqua:pnpm/pnpm"."platforms.linux-arm64-musl"]
+checksum = "sha256:d826eaa243bb7b9c7bc21df3fae9ade147c3f0b6f035fa9fa92eef5196d1762e"
+url = "https://github.com/pnpm/pnpm/releases/download/v11.25.0/pnpm-linux-arm64-musl.tar.gz"
+url_api = "https://api.github.com/repos/pnpm/pnpm/releases/assets/535298947"
+provenance = "github-attestations"
+
+[tools."aqua:pnpm/pnpm"."platforms.linux-x64"]
+checksum = "sha256:11caeed8b581d460638f836f10f6ead19cbf08d774a5b8e502628b20ebf3ac43"
+url = "https://github.com/pnpm/pnpm/releases/download/v11.25.0/pnpm-linux-x64.tar.gz"
+url_api = "https://api.github.com/repos/pnpm/pnpm/releases/assets/535298945"
+provenance = "github-attestations"
+
+[tools."aqua:pnpm/pnpm"."platforms.linux-x64-musl"]
+checksum = "sha256:2a25fd5614c89d3e8e7c8cabfe9f5f2aba3c4f997fb69e6934ee257dd8753ca5"
+url = "https://github.com/pnpm/pnpm/releases/download/v11.25.0/pnpm-linux-x64-musl.tar.gz"
+url_api = "https://api.github.com/repos/pnpm/pnpm/releases/assets/535298949"
+provenance = "github-attestations"
+
+[tools."aqua:pnpm/pnpm"."platforms.macos-arm64"]
+checksum = "sha256:cdcf7130ed2e7aa324c7c76ab597de66db0529b6b1e0db9e489bde538fdc0d04"
+url = "https://github.com/pnpm/pnpm/releases/download/v11.25.0/pnpm-darwin-arm64.tar.gz"
+url_api = "https://api.github.com/repos/pnpm/pnpm/releases/assets/535298948"
+provenance = "github-attestations"
+
+[tools."aqua:pnpm/pnpm"."platforms.windows-x64"]
+checksum = "sha256:2d0203af85fc6fbb40f786a2671f175e9119a7c6dfcc4f30b1fa17e0f072c301"
+url = "https://github.com/pnpm/pnpm/releases/download/v11.25.0/pnpm-win32-x64.zip"
+url_api = "https://api.github.com/repos/pnpm/pnpm/releases/assets/535298950"
+provenance = "github-attestations"
+
+[[tools."http:pnpm-npm"]]
+version = "11.25.0"
+backend = "http:pnpm-npm"
+
+[tools."http:pnpm-npm".options]
+format = "tar.gz"
+strip_components = "1"
+
+[tools."http:pnpm-npm"."platforms.linux-arm64"]
+checksum = "sha512:5cde925b4f075f725eb71fbae18a42ffe784524789f19b61c731cb8721ec28aaee160e01a8d5af4fedb2a42cdbf300efe23db356b0d4a17b4d63e11f8ab7c956"
+url = "https://packagefeedproxy.microsoft.io/npm/pnpm/-/pnpm-11.25.0.tgz"
+
+[tools."http:pnpm-npm"."platforms.linux-arm64-musl"]
+checksum = "sha512:5cde925b4f075f725eb71fbae18a42ffe784524789f19b61c731cb8721ec28aaee160e01a8d5af4fedb2a42cdbf300efe23db356b0d4a17b4d63e11f8ab7c956"
+url = "https://packagefeedproxy.microsoft.io/npm/pnpm/-/pnpm-11.25.0.tgz"
+
+[tools."http:pnpm-npm"."platforms.linux-x64"]
+checksum = "sha512:5cde925b4f075f725eb71fbae18a42ffe784524789f19b61c731cb8721ec28aaee160e01a8d5af4fedb2a42cdbf300efe23db356b0d4a17b4d63e11f8ab7c956"
+url = "https://packagefeedproxy.microsoft.io/npm/pnpm/-/pnpm-11.25.0.tgz"
+
+[tools."http:pnpm-npm"."platforms.linux-x64-musl"]
+checksum = "sha512:5cde925b4f075f725eb71fbae18a42ffe784524789f19b61c731cb8721ec28aaee160e01a8d5af4fedb2a42cdbf300efe23db356b0d4a17b4d63e11f8ab7c956"
+url = "https://packagefeedproxy.microsoft.io/npm/pnpm/-/pnpm-11.25.0.tgz"
+
+[tools."http:pnpm-npm"."platforms.macos-arm64"]
+checksum = "sha512:5cde925b4f075f725eb71fbae18a42ffe784524789f19b61c731cb8721ec28aaee160e01a8d5af4fedb2a42cdbf300efe23db356b0d4a17b4d63e11f8ab7c956"
+url = "https://packagefeedproxy.microsoft.io/npm/pnpm/-/pnpm-11.25.0.tgz"
+
+[tools."http:pnpm-npm"."platforms.macos-x64"]
+checksum = "sha512:5cde925b4f075f725eb71fbae18a42ffe784524789f19b61c731cb8721ec28aaee160e01a8d5af4fedb2a42cdbf300efe23db356b0d4a17b4d63e11f8ab7c956"
+url = "https://packagefeedproxy.microsoft.io/npm/pnpm/-/pnpm-11.25.0.tgz"
+
+[tools."http:pnpm-npm"."platforms.windows-x64"]
+checksum = "sha512:5cde925b4f075f725eb71fbae18a42ffe784524789f19b61c731cb8721ec28aaee160e01a8d5af4fedb2a42cdbf300efe23db356b0d4a17b4d63e11f8ab7c956"
+url = "https://packagefeedproxy.microsoft.io/npm/pnpm/-/pnpm-11.25.0.tgz"
+
 [[tools.node]]
 version = "22.23.2"
 backend = "core:node"
