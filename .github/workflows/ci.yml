@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Keep any plain docker build added later on the BuildKit path too.
+  DOCKER_BUILDKIT: "1"
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash -eo pipefail {0}
+
+jobs:
+  check:
+    name: build / typecheck / lint / test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # Validate the workflow schema and every embedded shell block.
+      - uses: raven-actions/actionlint@3d39aea434753780c3b3d4a1a31c854b4dbf49d7 # v2.2.0
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 18
+
+      - name: Check JavaScript syntax
+        run: npm run lint
+
+      - name: Run unit tests
+        run: npm test
+
+      # Unit tests temporarily rewrite package.json and must restore it.
+      - name: Verify unit tests leave the checkout unchanged
+        run: git diff --exit-code
+
+      - uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
+
+      # The repository harness owns the pnpm-version matrix and container hardening.
+      - name: Run Docker compatibility tests
+        run: npm run test:docker

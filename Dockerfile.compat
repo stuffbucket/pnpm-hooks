@@ -1,3 +1,5 @@
+# check=skip=InvalidDefaultArgInFrom
+# The harness always supplies an architecture-specific digest.
 ARG NODE_IMAGE
 FROM ${NODE_IMAGE}
 

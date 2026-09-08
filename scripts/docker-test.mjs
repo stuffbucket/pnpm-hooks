@@ -19,14 +19,18 @@ if (process.argv.length !== 2) {
 }
 
 function docker(arguments_, options = {}) {
+  const operation = [
+    "docker",
+    ...arguments_.slice(0, arguments_[0] === "buildx" ? 2 : 1),
+  ].join(" ");
   const result = spawnSync("docker", arguments_, {
     cwd: root,
     encoding: options.capture ? "utf8" : undefined,
     stdio: options.capture ? "pipe" : "inherit",
   });
-  if (result.error) throw new Error(`Docker could not start: ${result.error.message}`);
+  if (result.error) throw new Error(`${operation} could not start: ${result.error.message}`);
   if (result.status !== 0) {
-    throw new Error(`docker ${arguments_[0]} failed with exit code ${result.status ?? "unknown"}`);
+    throw new Error(`${operation} failed with exit code ${result.status ?? "unknown"}`);
   }
   return result.stdout?.trim();
 }
@@ -34,6 +38,14 @@ function docker(arguments_, options = {}) {
 const architecture = docker(["version", "--format", "{{.Server.Arch}}"], { capture: true });
 const nodeImage = nodeImages[architecture];
 if (!nodeImage) throw new Error(`Unsupported Docker server architecture: ${architecture}`);
+try {
+  docker(["buildx", "version"], { capture: true });
+} catch (error) {
+  throw new Error(
+    "Docker Buildx is required. Run `mise install --locked` and `mise run setup-buildx`.",
+    { cause: error },
+  );
+}
 
 for (const pnpmVersion of pnpmVersions) {
   const temporary = mkdtempSync(join(tmpdir(), `pnpm-compat-${pnpmVersion}-`));
